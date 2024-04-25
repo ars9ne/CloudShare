@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Welcome to the CloudShare!</h1>
-    <p><a href="/register">Register</a> or <a href="/login">Login</a></p>
+<body class="bg-gray-100 flex flex-col items-center justify-center h-screen">
+    <div class="text-center">
+        <h1 class="text-5xl font-bold text-gray-800 mb-6">Welcome to CloudShare!</h1>
+        <p class="text-xl text-gray-600 mb-8">A simple and secure way to store and share your files.</p>
+        <div class="space-x-4">
+            <a href="/register" class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow hover:bg-blue-600 transition-colors">Register</a>
+            <a href="/login" class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow hover:bg-green-600 transition-colors">Login</a>
+        </div>
+    </div>
 </body>
 </html>

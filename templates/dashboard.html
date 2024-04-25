@@ -4,20 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Welcome, {{ username }}!</h1>
-    <h2>Your Files</h2>
-    <ul>
-        {% for filename, filepath in user_files %}
-            <li>{{ filename }} <a href="{{ url_for('download_file', filename=filename) }}">Download</a> <a href="{{ url_for('delete_file', filename=filename) }}">Delete</a></li>
-        {% endfor %}
-    </ul>
-    <h2>Upload New File</h2>
-    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload">
-    </form>
-    <p><a href="{{ url_for('logout') }}">Logout</a></p>
+<body class="bg-gray-100 p-5">
+    <header class="bg-white shadow-md py-4 px-6 mb-6">
+        <h1 class="text-xl font-bold text-gray-800">Welcome, {{ username }}!</h1>
+    </header>
+    <div class="max-w-lg mx-auto">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Your Files</h2>
+        <ul class="space-y-2">
+            {% for filename, filepath in user_files %}
+            <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center">
+                <span class="text-gray-800">{{ filename }}</span>
+                    <div>
+                        <a href="{{ url_for('download_file', filename=filename) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center mr-2">Download</a>
+                        <a href="{{ url_for('delete_file', filename=filename) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">Delete</a>
+                    </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="max-w-lg mx-auto mt-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Upload New File</h2>
+        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" class="block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <button type="submit" class="mt-2 bg-indigo-500 text-white py-2 px-4 rounded-md hover:bg-indigo-600">Upload</button>
+        </form>
+    </div>
+    <div class="max-w-lg mx-auto mt-6">
+        <p class="text-gray-600"><a href="{{ url_for('logout') }}" class="text-red-500 hover:underline">Logout</a></p>
+    </div>
 </body>
 </html>
