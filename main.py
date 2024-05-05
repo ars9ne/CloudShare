@@ -8,7 +8,8 @@ import asyncio
 import threading
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'rar', '7z'}
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -19,7 +20,7 @@ def connect_to_database():
         host="localhost",
         database="cloudshare",
         user="root",
-        password="####"
+        password="######"
     )
 
 def generate_api_key():
@@ -34,6 +35,30 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
+        # Проверка длины имени пользователя и пароля
+        if len(username) < 3 or len(password) < 6:
+            error = 'Имя пользователя должно иметь длину не менее 3 символов, а пароль — не менее 6 символов.'
+            return render_template('register.html', error=error)
+
+        # Проверка отсутствия специальных символов в имени пользователя и пароле
+        if not username.isalnum() or not password.isalnum():
+            error = 'Имя пользователя и пароль должны содержать только буквенно-цифровые символы.'
+            return render_template('register.html', error=error)
+
+        # Проверка наличия пользователя с таким именем в базе данных
+        conn = connect_to_database()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+        existing_user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if existing_user:
+            error = 'Пользователь с таким именем уже существует.'
+            return render_template('register.html', error=error)
+
+        # Создание новой учетной записи
         hashed_password = generate_password_hash(password)
         api_key = generate_api_key()
 
@@ -42,14 +67,18 @@ def register():
         try:
             cursor.execute('INSERT INTO users (username, password, api_key) VALUES (%s, %s, %s)', (username, hashed_password, api_key))
             conn.commit()
-            return redirect(url_for('index'))
+            message = 'Регистрация прошла успешно! Теперь вы можете войти.'
+            return redirect(url_for('index', message=message))
         except mysql.connector.Error as e:
-            return str(e)
+            error = str(e)
+            return render_template('register.html', error=error)
         finally:
             cursor.close()
             conn.close()
 
     return render_template('register.html')
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -85,28 +114,50 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+def get_user_files(user_id):
+    conn = connect_to_database()
+    cursor = conn.cursor()
+    cursor.execute('SELECT filename, filepath FROM user_files WHERE user_id = %s', (user_id,))
+    user_files = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return user_files
+
+
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return 'No file part'
+        session['error'] = 'No file part'
+        return redirect(url_for('dashboard'))
 
     file = request.files['file']
 
     if file.filename == '':
-        return 'No selected file'
+        session['error'] = 'No selected file'
+        return redirect(url_for('dashboard'))
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         user_id = session.get('user_id')
 
         if user_id is None:
-            return 'User not logged in'
+            session['error'] = 'User not logged in'
+            return redirect(url_for('login'))
 
         upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], f'uploads_{user_id}')
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
 
         filepath = os.path.join(upload_folder, filename)
+
+        # Проверка размера файла
+        max_file_size = 10 * 1024 * 1024  # 10MB
+        if request.content_length > max_file_size:
+            session['error'] = 'File size exceeds the maximum allowed size (10MB)'
+            return redirect(url_for('dashboard'))
+
         file.save(filepath)
 
         conn = connect_to_database()
@@ -115,15 +166,18 @@ def upload_file():
             cursor.execute('INSERT INTO user_files (filename, filepath, user_id) VALUES (%s, %s, %s)',
                            (filename, filepath, user_id))
             conn.commit()
+            session['message'] = 'File uploaded successfully'
         except mysql.connector.Error as e:
-            print("Error:", e)
+            session['error'] = str(e)
         finally:
             cursor.close()
             conn.close()
 
         return redirect(url_for('dashboard'))
     else:
-        return 'Invalid file type'
+        session['error'] = 'Invalid file type'
+        return redirect(url_for('dashboard'))
+
 
 
 async def clean_up_uploads():
@@ -166,6 +220,9 @@ cleanup_thread.start()
 
 @app.route('/dashboard')
 def dashboard():
+    message = session.pop('message', None)
+    error = session.pop('error', None)
+
     if 'username' in session:
         user_id = session.get('user_id')
         if user_id is None:
@@ -178,8 +235,9 @@ def dashboard():
         cursor.close()
         conn.close()
 
-        return render_template('dashboard.html', username=session['username'], user_files=user_files)
+        return render_template('dashboard.html', username=session['username'], user_files=user_files, message=message, error=error)
     return redirect(url_for('login'))
+
 
 
 @app.route('/download/<filename>')

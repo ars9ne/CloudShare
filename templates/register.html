@@ -5,11 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+        function validateForm() {
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+
+            if (username.length < 3) {
+                alert("Имя пользователя должно быть длиной не менее 3 символов.");
+                return false;
+            }
+
+            if (password.length < 6) {
+                alert("Пароль должен содержать как минимум 6 символов.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="w-full max-w-xs">
-        <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/register" method="post">
+        <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/register" method="post" onsubmit="return validateForm()">
             <h1 class="mb-8 text-3xl text-center text-gray-700">Register</h1>
+            {% if message %}
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                <p class="font-bold">Success</p>
+                <p>{{ message }}</p>
+            </div>
+            {% endif %}
+            {% if error %}
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                <p class="font-bold">Error</p>
+                <p>{{ error }}</p>
+            </div>
+            {% endif %}
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
                     Username
@@ -23,9 +53,11 @@
                 <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" name="password">
             </div>
             <div class="flex items-center justify-between">
-                <input class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit" value="Register">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                    Register
+                </button>
                 <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="/login">
-                    Already have an account?
+                    Already have an account? Login
                 </a>
             </div>
         </form>

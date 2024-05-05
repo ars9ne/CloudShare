@@ -10,6 +10,18 @@
     <header class="bg-white shadow-md py-4 px-6 mb-6">
         <h1 class="text-xl font-bold text-gray-800">Welcome, {{ username }}!</h1>
     </header>
+    {% if message %}
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+        <p class="font-bold">Success</p>
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <p class="font-bold">Error</p>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
     <div class="max-w-lg mx-auto">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Your Files</h2>
         <ul class="space-y-2">
@@ -26,6 +38,7 @@
     </div>
     <div class="max-w-lg mx-auto mt-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Upload New File</h2>
+        <p class="text-gray-600 mb-2">Allowed file types: txt, pdf, png, jpg, jpeg, gif, zip, rar, 7z</p>
         <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
             <input type="file" name="file" class="block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
             <button type="submit" class="mt-2 bg-indigo-500 text-white py-2 px-4 rounded-md hover:bg-indigo-600">Upload</button>
