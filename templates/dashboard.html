@@ -27,18 +27,27 @@
         }
     </style>
     <script>
-        function toggleQR(id) {
-            var qrCode = document.getElementById('qr-' + id);
-            qrCode.style.display = qrCode.style.display === 'none' ? 'block' : 'none';
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const serverAddress = "{{ server_address }}"; // Get server address from Flask
 
-        function copyToClipboard(link) {
-            navigator.clipboard.writeText(link).then(() => {
-                alert('Link copied to clipboard!');
-            }).catch(err => {
-                alert('Failed to copy: ', err);
-            });
-        }
+            function toggleQR(id) {
+                var qrCode = document.getElementById('qr-' + id);
+                qrCode.style.display = qrCode.style.display === 'none' ? 'block' : 'none';
+            }
+
+            function copyToClipboard(link) {
+                const identifier = link.split('/').pop(); // Extract only the last part if it contains slashes
+                const fullPath = 'http://' + serverAddress + '/s/' + identifier; // Create the full path using server address
+                navigator.clipboard.writeText(fullPath).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(err => {
+                    alert('Failed to copy: ', err);
+                });
+            }
+
+            window.copyToClipboard = copyToClipboard; // Expose to global scope for HTML onclick event
+            window.toggleQR = toggleQR; // Expose to global scope for HTML onclick event
+        });
     </script>
 </head>
 <body class="bg-gray-100 p-5">
@@ -65,7 +74,7 @@
                 <div class="file-name">{{ filename }}</div>
                 <div class="file-buttons">
                     <a href="{{ url_for('download_file', filename=filename) }}" class="button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Download</a>
-                    <button onclick="copyToClipboard('{{ request.host_url }}s/{{ share_link }}')" class="button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Share</button>
+                    <button onclick="copyToClipboard('{{ share_link }}')" class="button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Share</button>
                     <button onclick="toggleQR('{{ filename }}')" class="button bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Show QR</button>
                     <a href="{{ url_for('delete_file', filename=filename) }}" class="button bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</a>
                 </div>

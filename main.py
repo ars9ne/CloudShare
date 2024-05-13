@@ -16,6 +16,8 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'rar', '
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+server_address = "37.204.221.44:5000"
+
 
 def connect_to_database():
     return mysql.connector.connect(
@@ -31,20 +33,31 @@ def generate_api_key():
 def generate_share_link():
     return str(uuid.uuid4())
 
+def extract_identifier(link):
+    return link.split('/')[-1]
+
+
 def generate_qr_code(link):
+
+
+    identifier = extract_identifier(link)
+    full_link = f'http://{server_address}/s/{identifier}'  # Form the correct URL with the external address
+
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=10,
-        border=4,
+        border=4
     )
-    qr.add_data(link)
+    qr.add_data(full_link)  # Add the corrected full link
     qr.make(fit=True)
+
     img = qr.make_image(fill_color="black", back_color="white")
     img_io = BytesIO()
     img.save(img_io, 'PNG')
     img_io.seek(0)
     return img_io
+
 
 @app.route('/')
 def index():
@@ -217,8 +230,9 @@ def dashboard():
         user_files = [(filename, os.path.join(app.config['UPLOAD_FOLDER'], f'uploads_{user_id}', filename), share_link) for filename, filepath, share_link in cursor.fetchall()]
         cursor.close()
         conn.close()
-        return render_template('dashboard.html', username=session['username'], user_files=user_files, message=message, error=error)
+        return render_template('dashboard.html', username=session['username'], user_files=user_files, message=message, error=error, server_address=server_address)
     return redirect(url_for('login'))
+
 
 @app.route('/download/<filename>')
 def download_file(filename):
