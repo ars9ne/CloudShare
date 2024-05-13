@@ -5,6 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .file-item {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column layout */
+            grid-gap: 5px;
+            margin-bottom: 10px; /* Space between items */
+        }
+        .file-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Four columns of equal width for buttons */
+            gap: 10px;
+        }
+        .button {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 38px; /* Consistent height */
+            width: 100%;
+        }
+    </style>
+    <script>
+        function toggleQR(id) {
+            var qrCode = document.getElementById('qr-' + id);
+            qrCode.style.display = qrCode.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function copyToClipboard(link) {
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ', err);
+            });
+        }
+    </script>
 </head>
 <body class="bg-gray-100 p-5">
     <header class="bg-white shadow-md py-4 px-6 mb-6">
@@ -25,13 +60,18 @@
     <div class="max-w-lg mx-auto">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Your Files</h2>
         <ul class="space-y-2">
-            {% for filename, filepath in user_files %}
-            <li class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center">
-                <span class="text-gray-800">{{ filename }}</span>
-                    <div>
-                        <a href="{{ url_for('download_file', filename=filename) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center mr-2">Download</a>
-                        <a href="{{ url_for('delete_file', filename=filename) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">Delete</a>
-                    </div>
+            {% for filename, filepath, share_link in user_files %}
+            <li class="bg-white rounded-lg shadow-md p-4 file-item">
+                <div class="file-name">{{ filename }}</div>
+                <div class="file-buttons">
+                    <a href="{{ url_for('download_file', filename=filename) }}" class="button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Download</a>
+                    <button onclick="copyToClipboard('{{ request.host_url }}s/{{ share_link }}')" class="button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Share</button>
+                    <button onclick="toggleQR('{{ filename }}')" class="button bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Show QR</button>
+                    <a href="{{ url_for('delete_file', filename=filename) }}" class="button bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete</a>
+                </div>
+                <div id="qr-{{ filename }}" style="display: none;">
+                    <img src="{{ url_for('generate_qr', link=share_link) }}" alt="QR Code for {{ filename }}">
+                </div>
             </li>
             {% endfor %}
         </ul>
